@@ -38,8 +38,10 @@
 import Avatar from "./Avatar";
 
 import { reactive, toRefs, getCurrentInstance } from "vue";
+import { ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
 
-import { getData } from "../../../network/test";
+import { getData } from "../../../network/login";
 
 export default {
   name: "LoginInput",
@@ -47,13 +49,15 @@ export default {
     Avatar,
   },
   setup() {
+    //获取页面实例
     const instance = getCurrentInstance();
+    const router = useRouter();
 
     const data = reactive({
       // 登录表单数据绑定对象
       LoginForm: {
-        username: "",
-        password: "",
+        username: "admin",
+        password: "123456",
       },
 
       // 表单验证规则
@@ -71,17 +75,9 @@ export default {
       },
     });
 
-    getData()
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-
     //表单重置
     const resetLoginForm = () => {
-      // console.log(instance);
+      console.log(instance);
       instance.refs.loginFromRef.resetFields();
     };
 
@@ -90,6 +86,25 @@ export default {
       instance.refs.loginFromRef.validate((valid) => {
         // console.log(valid);
         if (!valid) return;
+
+        // axios请求验证
+        getData(instance.ctx.LoginForm)
+          .then((res) => {
+            console.log(res);
+            if (res.data.meta.status !== 200)
+              return ElMessage.error("登陆失败，密码错误用户名不存在");
+            // 页面Message组件
+            ElMessage.success({
+              message: "登陆成功",
+              type: "success",
+            });
+            //设置页面token并跳转路由
+            sessionStorage.setItem("token", res.data.data.token);
+            router.push("/home");
+          })
+          .catch((err) => {
+            console.log(err);
+          });
       });
     };
 
