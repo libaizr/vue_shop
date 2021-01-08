@@ -27,11 +27,7 @@
       </el-form-item>
       <!-- 按钮 -->
       <el-form-item class="btns">
-<<<<<<< HEAD
-        <el-button type="primary">登录</el-button>
-=======
         <el-button type="primary" @click="login">登录</el-button>
->>>>>>> login
         <el-button type="info" @click="resetLoginForm">重置 </el-button>
       </el-form-item>
     </el-form>
@@ -42,13 +38,10 @@
 import Avatar from "./Avatar";
 
 import { reactive, toRefs, getCurrentInstance } from "vue";
-<<<<<<< HEAD
-=======
 import { ElMessage } from "element-plus";
 import { useRouter } from "vue-router";
 
 import { getData } from "../../../network/login";
->>>>>>> login
 
 export default {
   name: "LoginInput",
@@ -56,13 +49,9 @@ export default {
     Avatar,
   },
   setup() {
-<<<<<<< HEAD
-    const instance = getCurrentInstance();
-=======
     //获取页面实例
     const instance = getCurrentInstance();
     const router = useRouter();
->>>>>>> login
 
     const data = reactive({
       // 登录表单数据绑定对象
@@ -84,33 +73,14 @@ export default {
           { min: 6, max: 15, message: "长度在6到15个字符", trigger: "blur" },
         ],
       },
-
-      // 表单验证规则
-      loginFormRules: {
-        // 验证用户名是否合法
-        username: [
-          { required: true, message: "请输入用户名", trigger: "blur" },
-          { min: 3, max: 10, message: "长度在3到10个字符", trigger: "blur" },
-        ],
-        // 验证密码是否合法
-        password: [
-          { required: true, message: "请输入密码", trigger: "blur" },
-          { min: 6, max: 15, message: "长度在6到15个字符", trigger: "blur" },
-        ],
-      },
     });
 
-<<<<<<< HEAD
-=======
     //表单重置
->>>>>>> login
     const resetLoginForm = () => {
       console.log(instance);
       instance.refs.loginFromRef.resetFields();
     };
 
-<<<<<<< HEAD
-=======
     //表单预验证
     const login = () => {
       instance.refs.loginFromRef.validate((valid) => {
@@ -138,17 +108,13 @@ export default {
       });
     };
 
->>>>>>> login
     const refData = toRefs(data);
 
     return {
       ...refData,
       resetLoginForm,
-<<<<<<< HEAD
-=======
       login,
       getData,
->>>>>>> login
     };
   },
 };
