@@ -4,43 +4,78 @@
       :default-active="activeIndex"
       class="el-menu-demo"
       mode="horizontal"
+      active-text-color="#409eff"
+      :router="true"
     >
-      <el-menu-item index="1">处理中心</el-menu-item>
-      <el-menu-item index="2">处理中心</el-menu-item>
-      <el-menu-item index="3">处理中心</el-menu-item>
+      <el-submenu
+        :index="item.id + ''"
+        v-for="(item, id) in listMenus"
+        :key="id"
+      >
+        <!-- <template #title>{{ item.authName }}</template> -->
+        <template #title>
+          <i :class="iconList[item.id]"></i>
+          <span>{{ item.authName }}</span>
+        </template>
 
-      <span class="quit_btn">
-        <div>
-          <el-button type="primary" @click="logout">退出</el-button>
-        </div>
-      </span>
+        <el-menu-item
+          :index="'/' + subItem.path"
+          v-for="(subItem, id) in item.children"
+          :key="id"
+        >
+          {{ subItem.authName }}
+        </el-menu-item>
+      </el-submenu>
+      <!-- <el-submenu index="2">
+        <template #title>我的工作台</template>
+        <el-menu-item index="2-1">选项1</el-menu-item>
+        <el-menu-item index="2-2">选项2</el-menu-item>
+        <el-menu-item index="2-3">选项3</el-menu-item>
+      </el-submenu>
+      <el-submenu index="3">
+        <template #title>我的工作台</template>
+        <el-menu-item index="2-1">选项1</el-menu-item>
+        <el-menu-item index="2-2">选项2</el-menu-item>
+        <el-menu-item index="2-3">选项3</el-menu-item>
+      </el-submenu> -->
     </el-menu>
   </div>
 </template>
 
 <script>
 import { reactive, toRefs } from "vue";
-import { useRouter } from "vue-router";
+
+import { getMenus } from "network/getmenu";
 
 export default {
   name: "NavMenu",
   setup() {
-    const router = useRouter();
+    getMenus()
+      .then((res) => {
+        // console.log(res.data);
+        if (res.data.meta.status !== 200) return console.log(res.data.meta.msg);
+        return (data.listMenus = res.data.data);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
 
     const data = reactive({
       activeIndex: "1",
+      listMenus: [],
+      iconList: {
+        125: "el-icon-tickets",
+        103: "el-icon-lock",
+        101: "el-icon-orange",
+        102: "el-icon-truck",
+        145: "el-icon-postcard",
+      },
     });
-
-    const logout = () => {
-      sessionStorage.clear();
-      router.push("/login");
-    };
 
     const refData = toRefs(data);
 
     return {
       ...refData,
-      logout,
     };
   },
 };
@@ -49,18 +84,5 @@ export default {
 <style lang='less' scoped>
 .nav_menu {
   width: 100%;
-}
-.quit_btn {
-  width: 96px;
-  height: 100%;
-  position: absolute;
-  right: 0;
-
-  div {
-    position: relative;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
 }
 </style>

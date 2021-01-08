@@ -2,6 +2,7 @@
   <div class="home">
     <nav-top></nav-top>
     <nav-menu></nav-menu>
+    <router-view></router-view>
   </div>
 </template>
 
