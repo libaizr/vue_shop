@@ -7,11 +7,26 @@
     </el-breadcrumb>
 
     <el-card class="box-card">
-      <template #header>
-        <div class="clearfix">
-          <span>用户列表</span>
-        </div>
-      </template>
+      <div>
+        <el-row :gutter="20">
+          <el-col :span="8">
+            <el-input v-model="query" placeholder="请输入关键字"></el-input>
+            <span class="user_search">
+              <el-button
+                type="primary"
+                icon="el-icon-search"
+                @click="getList"
+              ></el-button
+            ></span>
+            <span class="user_add"
+              ><el-button type="primary" @click="dialogVisible = true"
+                >添加用户</el-button
+              >
+            </span>
+          </el-col>
+        </el-row>
+      </div>
+
       <div>
         <el-table :data="userList" stripe style="width: 100%">
           <el-table-column type="index" width="50" label="#"> </el-table-column>
@@ -94,22 +109,68 @@
       >
       </el-pagination>
     </el-card>
+
+    <el-dialog
+      title="添加用户"
+      v-model="dialogVisible"
+      width="40%"
+      :close-on-click-modal="false"
+      @close="addDialogClosed"
+    >
+      <span>
+        <el-form
+          :label-position="labelPosition"
+          label-width="80px"
+          :model="userAddForm"
+          :rules="addFormRules"
+          ref="addFormRef"
+        >
+          <el-form-item label="用户名" prop="username">
+            <el-input v-model="userAddForm.username"></el-input>
+          </el-form-item>
+          <el-form-item label="密码" prop="password">
+            <!-- <el-input
+              type="password"
+              v-model="userAddForm.password"
+              autocomplete="off"
+            ></el-input> -->
+            <el-input v-model="userAddForm.password"></el-input>
+          </el-form-item>
+          <el-form-item label="邮箱" prop="email">
+            <el-input v-model="userAddForm.email"></el-input>
+          </el-form-item>
+          <el-form-item label="手机">
+            <el-input v-model="userAddForm.mobile"></el-input>
+          </el-form-item>
+        </el-form>
+        {{ userAddForm }}
+      </span>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取 消</el-button>
+          <el-button type="primary" @click="addUser">添 加</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { getUsersList } from "network/getUsersList";
 import { putUserState } from "network/putUserState";
-import { reactive, toRefs } from "vue";
+import { addUserToData } from "network/addUser.js";
+import { reactive, toRefs, getCurrentInstance } from "vue";
 import { ElMessage } from "element-plus";
 
 export default {
   name: "Users",
   setup() {
+    const instance = getCurrentInstance();
+
     const getList = () => {
-      getUsersList(data.pagenum, data.pagesize)
+      getUsersList(data.query, data.pagenum, data.pagesize)
         .then((res) => {
-          console.log(res.data);
+          // console.log(res.data);
           if (res.data.meta.status !== 200)
             return console.log(res.data.meta.msg);
           data.total = res.data.data.total;
@@ -120,13 +181,82 @@ export default {
         });
     };
 
+    const state = reactive({
+      labelPosition: "right",
+      addFormRules: {
+        username: [
+          { required: true, message: "请输入用户名", trigger: "blur" },
+          {
+            min: 3,
+            max: 10,
+            message: "长度在 3 到 10 个字符",
+            trigger: "blur",
+          },
+        ],
+        password: [
+          { required: true, message: "请输入密码", trigger: "blur" },
+          {
+            min: 6,
+            max: 15,
+            message: "长度在 6 到 15 个字符",
+            trigger: "blur",
+          },
+        ],
+        email: [
+          {
+            type: "email",
+            message: "请输入正确的邮箱地址",
+            trigger: "blur",
+          },
+        ],
+      },
+      userAddForm: {
+        username: "",
+        password: "",
+        email: "",
+        mobile: "",
+      },
+    });
+
     const data = reactive({
+      dialogVisible: false,
       total: 0,
       userList: [],
+      query: "",
       pagenum: 1,
       pagesize: 2,
     });
     getList();
+
+    //添加操作操作对话框关闭同时重置输入数据
+    const addDialogClosed = () => {
+      state.userAddForm.username = "";
+      state.userAddForm.password = "";
+      state.userAddForm.email = "";
+      state.userAddForm.mobile = "";
+    };
+
+    //添加按钮事件
+    const addUser = () => {
+      // console.log(instance);
+      //预验证
+      instance.refs.addFormRef.validate((valid) => {
+        if (!valid) return;
+        addUserToData(state.userAddForm)
+          .then((res) => {
+            console.log(res);
+            if (res.data.meta.status != 201) {
+              return ElMessage.error("创建失败," + res.data.meta.msg);
+            } else {
+              data.dialogVisible = false;
+              return ElMessage.success("创建成功");
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      });
+    };
 
     // 设置单页显示条数
     const handleSizeChange = (newSize) => {
@@ -160,13 +290,18 @@ export default {
     };
 
     const refData = toRefs(data);
+    const refState = toRefs(state);
 
     return {
       ...refData,
+      ...refState,
       changeuser,
       handleSizeChange,
       handleCurrentChange,
       userStateChange,
+      getList,
+      addDialogClosed,
+      addUser,
     };
   },
 };
@@ -199,5 +334,15 @@ export default {
   top: 50%;
   left: 50%;
   transform: translate(-50%, 10%);
+
+  .user_search {
+    position: absolute;
+    margin-left: 5px;
+  }
+
+  .user_add {
+    position: absolute;
+    margin-left: 70px;
+  }
 }
 </style>

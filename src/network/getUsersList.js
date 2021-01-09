@@ -1,10 +1,11 @@
 import { request } from './request'
 
-export function getUsersList(pagenum, pagesize) {
+export function getUsersList(query, pagenum, pagesize) {
   return request({
     url: '/users',
     method: 'get',
     params: {
+      query,
       pagenum,
       pagesize
     }
