@@ -161,7 +161,22 @@
       @editDialogClosed="editDialogClosed"
       @editCommit="editCommit"
     >
-      <span> </span>
+      <span>
+        <el-form
+          label-position="right"
+          label-width="80px"
+          :model="userEditForm"
+          :rules="editFromRules"
+          ref="editFormRef"
+        >
+          <el-form-item label="邮箱" prop="email">
+            <el-input v-model="userEditForm.email"></el-input>
+          </el-form-item>
+          <el-form-item label="手机" prop="mobile">
+            <el-input v-model="userEditForm.mobile"></el-input>
+          </el-form-item>
+        </el-form>
+      </span>
     </user-edit-dialog>
   </div>
 </template>
@@ -170,6 +185,8 @@
 import { getUsersList } from "network/getUsersList";
 import { putUserState } from "network/putUserState";
 import { addUserToData } from "network/addUserToData";
+import { putUserIfon } from "network/putUserIfon";
+
 import { reactive, toRefs, getCurrentInstance } from "vue";
 import { ElMessage } from "element-plus";
 
@@ -179,7 +196,7 @@ export default {
   name: "Users",
   setup() {
     const instance = getCurrentInstance();
-    console.log(instance);
+    // console.log(instance);
     // 获取列表信息方法
     const getList = () => {
       getUsersList(data.query, data.pagenum, data.pagesize)
@@ -231,6 +248,21 @@ export default {
         mobile: "",
       },
       oprationIndex: "",
+      userEditForm: {
+        email: "",
+        mobile: "",
+      },
+      editFromRules: {
+        email: [
+          { required: true, message: "请输入内容", trigger: "blur" },
+          {
+            type: "email",
+            message: "请输入正确的邮箱地址",
+            trigger: "blur",
+          },
+        ],
+        mobile: [{ required: true, message: "请输入内容", trigger: "blur" }],
+      },
     });
 
     const data = reactive({
@@ -290,11 +322,11 @@ export default {
 
     // 修改用户状态
     const userStateChange = (userInfo) => {
-      console.log(userInfo);
+      // console.log(userInfo);
       putUserState(userInfo.id, userInfo.mg_state).then((res) => {
         if (res.data.meta.status != 200) {
           userInfo.mg_state = !userInfo.mg_state;
-          console.log(res);
+          // console.log(res);
           return ElMessage.error("更新用户状态失败");
         } else {
           ElMessage.success("更新用户状态成功");
@@ -305,18 +337,35 @@ export default {
     //子组件关闭时重置会话框状态
     const editDialogClosed = (index) => {
       data.showEditDialog = index;
+      state.oprationIndex = "";
+      state.userEditForm.email = "";
+      state.userEditForm.mobile = "";
     };
 
     //会话框开启
     const userInfoEdit = (item) => {
-      console.log(item);
+      // console.log(item);
       data.showEditDialog = true;
       state.oprationIndex = item.row.id;
     };
 
     //编辑按钮提交
     const editCommit = () => {
-      console.log(state.oprationIndex);
+      // console.log(state.oprationIndex);
+      putUserIfon(state.oprationIndex, state.userEditForm)
+        .then((res) => {
+          data.showEditDialog = false;
+          // console.log(res.data);
+          if (res.data.meta.status != 200) {
+            return ElMessage.error("更新用户信息失败");
+          } else {
+            getList();
+            ElMessage.success("更新用户信息成功");
+          }
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     };
 
     const refData = toRefs(data);
