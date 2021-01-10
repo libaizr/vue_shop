@@ -19,7 +19,7 @@
               ></el-button
             ></span>
             <span class="user_add"
-              ><el-button type="primary" @click="dialogVisible = true"
+              ><el-button type="primary" @click="showAddDialog = true"
                 >添加用户</el-button
               >
             </span>
@@ -27,6 +27,7 @@
         </el-row>
       </div>
 
+      <!-- 用户列表 -->
       <div>
         <el-table :data="userList" stripe style="width: 100%">
           <el-table-column type="index" width="50" label="#"> </el-table-column>
@@ -62,7 +63,7 @@
                   type="primary"
                   icon="el-icon-edit"
                   size="mini"
-                  @click="changeuser"
+                  @click="userInfoEdit(scope)"
                 ></el-button>
               </el-tooltip>
 
@@ -93,6 +94,7 @@
                 </el-button>
               </el-tooltip>
               {{ scope.row.id }}
+              {{ showEditDialog }}
             </template>
           </el-table-column>
         </el-table>
@@ -110,9 +112,10 @@
       </el-pagination>
     </el-card>
 
+    <!-- 添加用户会话框 -->
     <el-dialog
       title="添加用户"
-      v-model="dialogVisible"
+      v-model="showAddDialog"
       width="40%"
       :close-on-click-modal="false"
       @close="addDialogClosed"
@@ -143,30 +146,41 @@
             <el-input v-model="userAddForm.mobile"></el-input>
           </el-form-item>
         </el-form>
-        {{ userAddForm }}
       </span>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取 消</el-button>
+          <el-button @click="showAddDialog = false">取 消</el-button>
           <el-button type="primary" @click="addUser">添 加</el-button>
         </span>
       </template>
     </el-dialog>
+
+    <!-- 修改用户信息 -->
+    <user-edit-dialog
+      :showEditDialog="showEditDialog"
+      @editDialogClosed="editDialogClosed"
+      @editCommit="editCommit"
+    >
+      <span> </span>
+    </user-edit-dialog>
   </div>
 </template>
 
 <script>
 import { getUsersList } from "network/getUsersList";
 import { putUserState } from "network/putUserState";
-import { addUserToData } from "network/addUser.js";
+import { addUserToData } from "network/addUserToData";
 import { reactive, toRefs, getCurrentInstance } from "vue";
 import { ElMessage } from "element-plus";
+
+import UserEditDialog from "./UserChildren/UserEditDialog";
 
 export default {
   name: "Users",
   setup() {
     const instance = getCurrentInstance();
-
+    console.log(instance);
+    // 获取列表信息方法
     const getList = () => {
       getUsersList(data.query, data.pagenum, data.pagesize)
         .then((res) => {
@@ -216,10 +230,12 @@ export default {
         email: "",
         mobile: "",
       },
+      oprationIndex: "",
     });
 
     const data = reactive({
-      dialogVisible: false,
+      showEditDialog: false,
+      showAddDialog: false,
       total: 0,
       userList: [],
       query: "",
@@ -248,7 +264,7 @@ export default {
             if (res.data.meta.status != 201) {
               return ElMessage.error("创建失败," + res.data.meta.msg);
             } else {
-              data.dialogVisible = false;
+              data.showAddDialog = false;
               return ElMessage.success("创建成功");
             }
           })
@@ -272,6 +288,7 @@ export default {
       getList();
     };
 
+    // 修改用户状态
     const userStateChange = (userInfo) => {
       console.log(userInfo);
       putUserState(userInfo.id, userInfo.mg_state).then((res) => {
@@ -285,8 +302,21 @@ export default {
       });
     };
 
-    const changeuser = (item) => {
+    //子组件关闭时重置会话框状态
+    const editDialogClosed = (index) => {
+      data.showEditDialog = index;
+    };
+
+    //会话框开启
+    const userInfoEdit = (item) => {
       console.log(item);
+      data.showEditDialog = true;
+      state.oprationIndex = item.row.id;
+    };
+
+    //编辑按钮提交
+    const editCommit = () => {
+      console.log(state.oprationIndex);
     };
 
     const refData = toRefs(data);
@@ -295,14 +325,19 @@ export default {
     return {
       ...refData,
       ...refState,
-      changeuser,
+      userInfoEdit,
       handleSizeChange,
       handleCurrentChange,
       userStateChange,
       getList,
       addDialogClosed,
       addUser,
+      editDialogClosed,
+      editCommit,
     };
+  },
+  components: {
+    UserEditDialog,
   },
 };
 </script>
