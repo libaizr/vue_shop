@@ -79,6 +79,7 @@
                   type="danger"
                   icon="el-icon-delete"
                   size="mini"
+                  @click="userDeleteDialog(scope)"
                 ></el-button>
               </el-tooltip>
 
@@ -90,11 +91,14 @@
                 placement="bottom"
                 :enterable="false"
               >
-                <el-button type="warning" icon="el-icon-setting" size="mini">
+                <el-button
+                  type="warning"
+                  icon="el-icon-setting"
+                  size="mini"
+                  @click="roleAssign"
+                >
                 </el-button>
               </el-tooltip>
-              {{ scope.row.id }}
-              {{ showEditDialog }}
             </template>
           </el-table-column>
         </el-table>
@@ -186,6 +190,7 @@ import { getUsersList } from "network/getUsersList";
 import { putUserState } from "network/putUserState";
 import { addUserToData } from "network/addUserToData";
 import { putUserIfon } from "network/putUserIfon";
+import { userDelete } from "network/userDelete";
 
 import { reactive, toRefs, getCurrentInstance } from "vue";
 import { ElMessage } from "element-plus";
@@ -368,6 +373,32 @@ export default {
         });
     };
 
+    //删除按钮
+    const userDeleteDialog = (scope) => {
+      let res = confirm("此操作将永久删除该用户, 是否继续?");
+      if (res == true) {
+        userDelete(scope.row.id)
+          .then((res) => {
+            if (res.data.meta.status != 200) {
+              return ElMessage.error("删除失败");
+            } else {
+              getList();
+              ElMessage.success("删除成功");
+            }
+          })
+          .catch((err) => {
+            console.log(err);
+          });
+      } else {
+        return ElMessage("取消删除");
+      }
+    };
+
+    //分配角色按钮
+    const roleAssign = () => {
+      console.log(1);
+    };
+
     const refData = toRefs(data);
     const refState = toRefs(state);
 
@@ -383,6 +414,8 @@ export default {
       addUser,
       editDialogClosed,
       editCommit,
+      userDeleteDialog,
+      roleAssign,
     };
   },
   components: {
